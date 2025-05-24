@@ -14,6 +14,8 @@ This guide details the process to create VirtualBox VMs for a Kubernetes control
    - **IPv4 Address**: `192.168.3.1`
    - **IPv4 Network Mask**: `255.255.255.0`
    - **Disable DHCP Server**.
+   ![image](https://github.com/user-attachments/assets/bd36d854-eb67-4b01-b623-27c260bf10b9)
+
 5. Save and exit.
 
 ---
@@ -47,8 +49,10 @@ This guide details the process to create VirtualBox VMs for a Kubernetes control
 - Set:
   - Subnet: `192.168.3.0/24`
   - Address: `192.168.3.20`
-  - Gateway: leave blank
-  - DNS: use default or `8.8.8.8`
+
+   ![image](https://github.com/user-attachments/assets/32e02b6e-7955-4811-85ce-4551e0e786f6)
+
+  ![image](https://github.com/user-attachments/assets/8f245d4f-b1f4-44cc-85b2-03fd58869728)
 
 ### B. Install SSH Server
 - Check **Install OpenSSH Server** option.
