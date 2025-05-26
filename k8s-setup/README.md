@@ -160,6 +160,11 @@ kubectl get nodes -o wide
 kubectl get pods -A
 ```
 
+Run on Both:
+```bash
+sudo systemctl enable kubelet
+```
+
 Expected:
 ```
 NAME           STATUS   ROLES           VERSION   INTERNAL-IP
