@@ -160,16 +160,17 @@ kubectl get nodes -o wide
 kubectl get pods -A
 ```
 
-Run on Both:
-```bash
-sudo systemctl enable kubelet
-```
 
 Expected:
 ```
 NAME           STATUS   ROLES           VERSION   INTERNAL-IP
 controlplane   Ready    control-plane   v1.31.x   192.168.3.20
 worker         Ready    <none>          v1.31.x   192.168.3.21
+```
+
+Run on Both:
+```bash
+sudo systemctl enable kubelet
 ```
 
 ---
