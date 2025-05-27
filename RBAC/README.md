@@ -40,24 +40,24 @@ sudo openssl x509 -req -in shubham.csr -CA /etc/kubernetes/pki/ca.crt \
 API_SERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
 
 # Set up kubeconfig
+use commond below to find your-kubernetes-api-server
+kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'
+
 kubectl config set-cluster kubernetes \
   --certificate-authority=/etc/kubernetes/pki/ca.crt \
   --embed-certs=true \
-  --server=$API_SERVER \
+  --server=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}') \
   --kubeconfig=shubham.kubeconfig
 
-kubectl config set-credentials shubham \
-  --client-certificate=shubham.crt \
-  --client-key=shubham.key \
-  --embed-certs=true \
-  --kubeconfig=shubham.kubeconfig
+kubectl config set-credentials shubham --client-certificate=shubham.crt --client-key=shubham.key --embed-certs=true --kubeconfig=shubham.kubeconfig
 
-kubectl config set-context shubham-context \
-  --cluster=kubernetes \
-  --user=shubham \
-  --kubeconfig=shubham.kubeconfig
+
+kubectl config set-context shubham-context --cluster=$(kubectl config view --minify -o jsonpath='{.clusters[0].name}') --user=shubham --kubeconfig=shubham.kubeconfig
 
 kubectl config use-context shubham-context --kubeconfig=shubham.kubeconfig
+
+kubectl config current-context --kubeconfig=shubham.kubeconfig
+
 ```
 
 ---
