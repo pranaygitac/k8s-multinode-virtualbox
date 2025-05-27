@@ -175,6 +175,14 @@ sudo systemctl enable kubelet
 
 ---
 
+Tip: to run pods on control plane , untaint it
+
+```bash
+kubectl taint nodes controlplane node-role.kubernetes.io/control-plane:NoSchedule-
+#node/controlplane untainted
+
+```
+
 ## 🎉 Done!
 
 You've built a secure and functional Kubernetes cluster using kubeadm, Calico CNI, and containerd.
