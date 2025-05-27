@@ -1,118 +1,157 @@
 
-# 💻 VirtualBox VM Setup for Kubernetes Cluster (Ubuntu 24.04)
+# Horizontal Scroll Site Deployment
 
-This guide details the process to create VirtualBox VMs for a Kubernetes control plane and worker node using a host-only network.
+This guide walks you through the steps to:
 
----
-
-## 🛠️ 1. Create Host-Only Network
-
-1. Open **Oracle VirtualBox**.
-2. Go to **File > Tools > Network Manager**.
-3. Click **Create** a new Host-Only Network.
-4. Configure manually:
-   - **IPv4 Address**: `192.168.3.1`
-   - **IPv4 Network Mask**: `255.255.255.0`
-   - **Disable DHCP Server**.
-   ![image](https://github.com/user-attachments/assets/bd36d854-eb67-4b01-b623-27c260bf10b9)
-
-5. Save and exit.
+1. Build a Docker image for the Horizontal Scroll Site
+2. Push the Docker image to Docker Hub
+3. Deploy the image on a Kubernetes cluster under the `dev` namespace using a combined manifest
+4. Expose the application via a NodePort service
+5. Add health probes for better pod management
 
 ---
 
-## 🖥️ 2. Create Control Plane VM
+## Prerequisites
 
-1. Go to **Machine > New**.
-2. Name: `controlplane`
-3. Type: Linux, Version: Ubuntu (64-bit)
-4. Skip unattended installation.
-5. Attach ISO: `ubuntu-24.04.2-live-server-amd64.iso`
-
-### VM Settings
-- CPU: 2+
-- RAM: 2048 MB or more
-- Disk: 20 GB
-- Network:
-  - **Adapter 1**: NAT
-  - **Adapter 2**: Host-only (choose the host-only network you created)
+- Docker installed on your local machine
+- Access to Docker Hub account (`psawant05`)
+- Kubernetes cluster with `kubectl` configured to access it
+- Permissions to create namespaces, deployments, and services on the cluster
 
 ---
 
-## ⚙️ 3. Install Ubuntu on VM
+## Step 1: Build Docker Image
 
-1. Start the VM and begin Ubuntu setup.
-2. Accept defaults for everything except:
+Navigate to your project directory containing the Dockerfile, then run:
 
-### A. Network Configuration
-- Choose adapter with **no IP assigned** (host-only adapter).
-- Edit IPv4 method to **Manual**.
-- Set:
-  - Subnet: `192.168.3.0/24`
-  - Address: `192.168.3.20`
-
-   ![image](https://github.com/user-attachments/assets/32e02b6e-7955-4811-85ce-4551e0e786f6)
-
-  ![image](https://github.com/user-attachments/assets/8f245d4f-b1f4-44cc-85b2-03fd58869728)
-
-### B. Install SSH Server
-- Check **Install OpenSSH Server** option.
-
-3. Complete the installation and reboot.
-
----
-
-## 🧑‍💻 4. Create Worker Node VM
-
-Repeat the above steps:
-- Name: `worker`
-- Set Host-only IP: `192.168.3.21`
-
----
-
-## 🔐 5. Setup SSH Access from VS Code
-
-### A. Generate SSH Key on Host (Windows)
 ```bash
-ssh-keygen -t rsa -b 4096 -C "pranay@k8s"
+docker build -t psawant05/horizontal-scroll-site:latest .
 ```
 
-- Save the key in default location (e.g., `~/.ssh/id_rsa`)
+---
 
-### B. Copy SSH Key to VMs
+## Step 2: Push Docker Image to Docker Hub
+
+Login to Docker Hub:
+
 ```bash
-ssh-copy-id pranay@192.168.3.20
-ssh-copy-id pranay@192.168.3.21
+docker login -u psawant05
 ```
 
-If `ssh-copy-id` is not available, manually copy the key:
+Enter your password or access token when prompted.
+
+Push the image:
+
 ```bash
-cat ~/.ssh/id_rsa.pub | ssh pranay@192.168.3.20 'mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys'
-cat ~/.ssh/id_rsa.pub | ssh pranay@192.168.3.21 'mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys'
+docker push psawant05/horizontal-scroll-site:latest
 ```
 
 ---
 
-## 🧠 6. VS Code SSH Config (`~/.ssh/config`)
+## Step 3: Deploy on Kubernetes
 
-```ssh
-Host controlplane
-    HostName 192.168.3.20
-    User pranay
-    IdentityFile ~/.ssh/id_rsa
+The following combined manifest creates the `dev` namespace, deployment, and service.
 
-Host worker
-    HostName 192.168.3.21
-    User pranay
-    IdentityFile ~/.ssh/id_rsa
+Save this manifest as `horizontal-site-dev.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dev
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: horizontal-site
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: horizontal-site
+  template:
+    metadata:
+      labels:
+        app: horizontal-site
+    spec:
+      containers:
+      - name: horizontal-site
+        image: psawant05/horizontal-scroll-site:latest
+        ports:
+        - containerPort: 80
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: horizontal-site-service
+  namespace: dev
+spec:
+  type: NodePort
+  selector:
+    app: horizontal-site
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30080
+```
+
+Apply the manifest:
+
+```bash
+kubectl apply -f horizontal-site-dev.yaml
 ```
 
 ---
 
-## 🚀 7. Connect from VS Code
+## Step 4: Access the Application
 
-- Open VS Code.
-- Press `F1` → **Remote-SSH: Connect to Host** → select `controlplane` or `worker`.
+Get the IP address of any Kubernetes node:
 
-You're now ready to interact with your VMs from VS Code over SSH.
+```bash
+kubectl get nodes -o wide
+```
+
+Visit the app at:
+
+```
+http://<NODE-IP>:30080
+```
 
 ---
+
+## Additional Notes
+
+- You can customize the health check endpoint by modifying the probes in the manifest.
+- For production, consider using Ingress instead of NodePort for better routing and TLS termination.
+- Scale your deployment by updating the replicas count.
+
+---
+
+## Troubleshooting
+
+- If you get permission errors with Docker commands, ensure your user is added to the `docker` group.
+- If Kubernetes pods do not become ready, check pod logs with:
+
+```bash
+kubectl logs -n dev <pod-name>
+```
+
+---
+
+Feel free to reach out if you need help customizing or extending this setup!
