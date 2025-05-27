@@ -184,3 +184,56 @@ echo "KUBECONFIG is changed"
 
 - [Kubernetes RBAC Docs](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
 - [Client Certificate Authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#x509-client-certs)
+
+## 🔥 Purging User `shubham` from the Cluster
+
+To completely remove all access and references to the user `shubham`, follow the steps below.
+
+### 1. 🧹 Delete RoleBindings (Namespace Scoped)
+
+```bash
+# List all RoleBindings involving 'shubham'
+kubectl get rolebindings --all-namespaces | grep shubham
+
+# Delete specific RoleBinding
+kubectl delete rolebinding shubham-scale-deployments -n dev
+```
+
+### 2. 🧹 Delete ClusterRoleBindings
+
+```bash
+kubectl get clusterrolebindings | grep shubham
+kubectl delete clusterrolebinding shubham-view
+```
+
+### 3. 🔐 Delete Certificates and Kubeconfig Files
+
+```bash
+# Delete generated certs and keys
+rm -f shubham.crt shubham.key shubham.csr shubham.kubeconfig shubham.srl
+
+# Remove from user's home directory if copied there
+rm -rf /home/shubham/.kube
+```
+
+### 4. 🗑 Delete Roles (If Specific to User)
+
+```bash
+kubectl delete role scale-deployments -n dev
+```
+
+### 5. ❌ Remove Kubeconfig User and Context Entries (Optional)
+
+```bash
+kubectl config unset users.shubham
+kubectl config unset contexts.shubham-context
+```
+
+### ✅ Verification
+
+Ensure the user no longer has any access:
+
+```bash
+kubectl auth can-i get pods --as=shubham
+# Expected output: no
+```
