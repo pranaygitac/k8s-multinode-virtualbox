@@ -1,0 +1,61 @@
+# Create a namespace named "dev" to logically isolate the deployment
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dev
+---
+# Define a Deployment to manage the horizontal-site app
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: horizontal-site                  # Name of the Deployment
+  namespace: dev                         # Deploy in the "dev" namespace
+spec:
+  replicas: 1                            # Run one pod (can be scaled later)
+  selector:
+    matchLabels:
+      app: horizontal-site               # Selector to match the pod template below
+  template:
+    metadata:
+      labels:
+        app: horizontal-site             # Labels used for selector matching and service targeting
+    spec:
+      containers:
+      - name: horizontal-site            # Name of the container inside the pod
+        image: psawant05/horizontal-scroll-site:latest  # Image from Docker Hub
+        ports:
+        - containerPort: 80              # Expose port 80 inside the container
+
+        # Liveness probe to check if the container is still running
+        livenessProbe:
+          httpGet:
+            path: /                      # Check the root path for a 200 response
+            port: 80
+          initialDelaySeconds: 30        # Wait 10s before starting the first check
+          periodSeconds: 10              # Check every 10s
+          failureThreshold: 5            # Restart the container after 3 failed checks
+
+        # Readiness probe to determine if the pod is ready to serve traffic
+        readinessProbe:
+          httpGet:
+            path: /                      # Same root path check
+            port: 80
+          initialDelaySeconds: 180         # Wait 5s before the first check
+          periodSeconds: 5               # Check every 5s
+          failureThreshold: 3            # Mark pod unready after 3 failures
+---
+# Expose the application via a Service of type NodePort
+apiVersion: v1
+kind: Service
+metadata:
+  name: horizontal-site-service          # Name of the service
+  namespace: dev                         # Must be in the same namespace as the deployment
+spec:
+  type: NodePort                         # Expose the app outside the cluster on a node port
+  selector:
+    app: horizontal-site                 # Route traffic to pods with this label
+  ports:
+    - protocol: TCP
+      port: 80                           # Internal cluster port
+      targetPort: 80                     # Port the pod/container listens on
+      nodePort: 30080                    # External port exposed on each worker node (30000–32767)
