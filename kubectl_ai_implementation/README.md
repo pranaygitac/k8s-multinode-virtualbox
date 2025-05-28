@@ -3,6 +3,9 @@
 
 This guide walks through setting up and running `kubectl-ai` with an LLM (Large Language Model) locally on Windows using [Ollama](https://ollama.com) and the `gemma3:12b-it-qat` model.
 
+![Uploading kubectl-ai.gif…]()
+
+
 ---
 
 ## ✅ Prerequisites
