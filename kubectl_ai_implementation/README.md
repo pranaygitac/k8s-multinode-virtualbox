@@ -51,6 +51,8 @@ This guide walks through setting up and running `kubectl-ai` with an LLM (Large 
 
    ```powershell
    $env:KUBECONFIG="C:\Users\Pranay\Downloads\tools\mykubeconfig.yaml"
+   #OR
+   set KUBECONFIG=C:\Users\Pranay\Downloads\tools\mykubeconfig.yaml
    ```
 
 3. Test connectivity:
@@ -79,10 +81,9 @@ This guide walks through setting up and running `kubectl-ai` with an LLM (Large 
 4. (Optional) Test model API locally:
 
    ```powershell
-   Invoke-RestMethod -Uri http://localhost:11434/api/generate `
-     -Method Post `
-     -Body '{"model": "gemma3:12b-it-qat", "prompt": "What is Kubernetes?", "stream": false}' `
-     -ContentType "application/json"
+   Invoke-RestMethod -Uri http://localhost:11434/api/generate `  -Method Post `  -Body '{"model": "llama3", "prompt": "What is Kubernetes?", "stream": false}' `  -ContentType "application/json"
+   #OR
+   curl -X POST http://localhost:11434/api/generate   -H "Content-Type: application/json"   -d "{\"model\": \"llama3\", \"prompt\": \"What is Kubernetes?\", \"stream\": false}"
    ```
 
 ---
