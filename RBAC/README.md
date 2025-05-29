@@ -1,5 +1,7 @@
 # Kubernetes User Access and RBAC Setup
 
+#**yt** : https://youtu.be/LLG9Wy3oSeQ
+
 This guide walks through the steps to:
 
 - Create a client certificate for a user (`shubham`)
